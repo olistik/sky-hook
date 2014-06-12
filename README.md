@@ -1,6 +1,8 @@
 Sky-Hook
 ==========
 
+![Sky-Hook](https://lh3.googleusercontent.com/-3X-v1Jxh5is/U5m-BwiG0kI/AAAAAAAAzUk/EStajPKEzno/w554-h258-no/sky-hook-replica.jpg "Sky Hook")
+
 This tool emulates a browser (via CasperJS/PhantomJS) in order to grab some information provided by the [Nexive platform](https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx).
 
 ## Requirements
