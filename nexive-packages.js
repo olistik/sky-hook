@@ -42,7 +42,7 @@ var checkCurrentPage = function() {
   return fetchCurrentPageIndex.bind(this)() == stepCurrentPageIndex;
 }
 
-var parseCurrentPage = function() {
+var parseCurrentPage = function(nextCallback) {
   this.echo('Current page index: ' + fetchCurrentPageIndex.bind(this)());
   var pageShipmentStatuses = this.evaluate(function() {
     return $('.dxgvTable .dxgvDataRow').map(function(index, element) {
@@ -74,10 +74,46 @@ var parseCurrentPage = function() {
       // size: 10, // Taglia
       data.size = $(element).children().eq(10).children('span').html();
 
+      data.detailsLinkId = $(element).children().eq(0).find('img').attr('id');
+
       return data;
     }).get();
   });
-  shipmentStatuses = shipmentStatuses.concat(pageShipmentStatuses);
+
+  var fetchDetailInfoAndAdvanceUnlessLastRow = function(pageShipmentStatusIndex) {
+    if (pageShipmentStatusIndex >= pageShipmentStatuses.length) {
+      shipmentStatuses = shipmentStatuses.concat(pageShipmentStatuses);
+      nextCallback();
+      return;
+    }
+    var detailsLinkId = pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
+    this.echo('Loading detail ' + (pageShipmentStatusIndex + 1) + '/' + pageShipmentStatuses.length);
+    this.click('#' + detailsLinkId);
+    this.waitFor(
+      function() {
+        return this.evaluate(function() {
+          return $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').length == 1;
+        });
+      }.bind(this), function() {
+        var detailsData = this.evaluate(function() {
+          var address = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').html().trim();
+          var cap = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestCap').html().trim();
+          return {
+            address: address,
+            cap: cap
+          };
+        });
+        pageShipmentStatuses[pageShipmentStatusIndex].address = detailsData.address;
+        pageShipmentStatuses[pageShipmentStatusIndex].cap = detailsData.cap;
+        delete pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
+        fetchDetailInfoAndAdvanceUnlessLastRow(pageShipmentStatusIndex + 1);
+      }.bind(this), function() {
+        this.echo('Timed out.');
+      }.bind(this),
+      10000
+    );
+  }.bind(this);
+  fetchDetailInfoAndAdvanceUnlessLastRow(0);
 }
 
 var isLastPage = function() {
@@ -99,10 +135,11 @@ var advanceToNextPage = function() {
 }
 
 var parseCurrentPageAndAdvanceUnlessLastPage = function() {
-  parseCurrentPage.bind(this)();
-  if (!isLastPage.bind(this)()) {
-    advanceToNextPage.bind(this)();
-  }
+  parseCurrentPage.bind(this)(function() {
+    if (!isLastPage.bind(this)()) {
+      advanceToNextPage.bind(this)();
+    }
+  }.bind(this));
 }
 
 // Execution flow
