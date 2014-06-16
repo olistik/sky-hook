@@ -4,7 +4,7 @@ var fs = require('fs');
 
 var credentials = require('credentials.json');
 
-var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
+var startingUrl = 'https://www.formulacerta.it/Clienti/Default.aspx';
 
 // Step 1
 var loginStep = function() {
@@ -27,6 +27,14 @@ var clickAdvancedSearchButton = function() {
   this.click('#ctl00_cphMainContext_hlkTrackAndTrace');
 }
 
+// Execution flow
+casper.start(startingUrl, loginStep.bind(casper));
+
+casper.waitFor(
+  checkAdvancedSearchButton.bind(casper),
+  clickAdvancedSearchButton.bind(casper)
+);
+
 // global vars
 var stepCurrentPageIndex = 1;
 var shipmentStatuses = [];
@@ -47,21 +55,15 @@ var parseCurrentPage = function() {
   var pageShipmentStatuses = this.evaluate(function() {
     return $('.dxgvTable .dxgvDataRow').map(function(index, element) {
       var indexMapping = {
-        barcode: 1, // BarCode
-        firstName: 2, // Nome
-        lastName: 3, // Cognome
-        city: 4, // Comune
-        province: 5, // Prov
-        lastUpdatedAt: 6, // Data Ultimo Stato
-        state: 7, // Stato
-        reason: 8, // Motivo
-        cod: 9, // COD
-        units: 11, // Colli
-        estimatedDeliveryDate: 12, // Data Prevista Consegna
-        fileId: 13, // Id File
-        createdAt: 14, // Data Creazione
-        customerReference: 15, // Rif. Cliente
-        priceFacility: 16 // Centro di Costo
+        receiver: 1, // Destinatario
+        receiverAddress: 2, // Indirizzo Destinatario
+        city: 3, // Città
+        cap: 4, // Cap
+        province: 5, // Provincia
+        acceptedAt: 7, // Data Accettazione
+        lastUpdatedAt: 9, // Data stato
+        other1: 15, // Altro1
+        other2: 16, // Altro2
       };
       var data = {};
       for (var key in indexMapping) {
@@ -71,8 +73,21 @@ var parseCurrentPage = function() {
         }
       }
 
-      // size: 10, // Taglia
-      data.size = $(element).children().eq(10).children('span').html();
+      // barcode: 0, // BarCode
+      data.barcode = $(element).children().eq(0).children().html();
+
+      // state: 8, // Stato
+      // "../../Images/statoBusta_X.jpg"
+      var stateMapping = {
+        '1': 'state_1', // Recapitata Nexive
+        '2': 'state_2', // Postalizzata PT
+        '3': 'state_3', // In lavorazione
+        '4': 'state_4', // Rese
+        '5': 'state_5', // NoCert
+        '6': 'state_6', // In giacenza
+        '7': 'state_7' // Nexive International
+      };
+      data.state = stateMapping[$(element).children().eq(8).find('img').attr('src').slice(24, -4)];
 
       return data;
     }).get();
@@ -105,29 +120,45 @@ var parseCurrentPageAndAdvanceUnlessLastPage = function() {
   }
 }
 
-// Execution flow
-casper.start(startingUrl, loginStep.bind(casper));
+var performSearchAndAdvance = function() {
+  this.click('#ctl00_cphMainContext_datePeriodoDa_B-1Img');
+  this.waitUntilVisible('#ctl00_cphMainContext_datePeriodoDa_DDD_PW-1', function() {
+    this.evaluate(function() {
+      aspxCalShiftMonth('ctl00_cphMainContext_datePeriodoDa_DDD_C', -1);
+      $(".dxeCalendarDay").removeClass('to-click');
+      $('#ctl00_cphMainContext_datePeriodoDa_DDD_C_mc')
+        .find(".dxeCalendarDay")
+        .filter(function(index, element) {
+          return $(element).html() == '1'
+        })
+        .first()
+        .addClass('to-click');
+    });
+    this.click('#ctl00_cphMainContext_datePeriodoDa_DDD_C_mc .dxeCalendarDay.to-click');
 
-casper.waitFor(
-  checkAdvancedSearchButton.bind(casper),
-  clickAdvancedSearchButton.bind(casper)
-);
+    this.click('#ctl00_cphMainContext_datePeriodoA_B-1Img');
+    this.waitUntilVisible('#ctl00_cphMainContext_datePeriodoA_DDD_PW-1', function() {
+      this.click('#ctl00_cphMainContext_datePeriodoA_DDD_C_BT');
 
-casper.waitFor(
-  checkCurrentPage.bind(casper),
-  parseCurrentPageAndAdvanceUnlessLastPage.bind(casper)
-);
+      this.click('#ctl00_cphMainContext_btnFiltra_B');
 
-// debugging only
-var printResults = function() {
-  var barcodes = shipmentStatuses.map(function(shipmentStatus) {
-    return shipmentStatus.barcode;
-  }).join(', ');
-  this.echo('Extracted ' + shipmentStatuses.length + ' records: [' + barcodes + ']');
-}
+      this.waitForSelector(
+        '#ctl00_cphMainContext_gdvDettaglio_DXMainTable .dxgvDataRow',
+        parseCurrentPageAndAdvanceUnlessLastPage.bind(casper),
+        function() {
+          this.echo('Wait for the paginated results timed out.');
+        },
+        10000
+      );
+    });
+
+  });
+};
+
+casper.then(performSearchAndAdvance.bind(casper));
 
 var dumpResultsToFile = function() {
-  var outputFilename = moment().format('[nexive-]YYYYMMDDhhmmss[.json]');
+  var outputFilename = moment().format('[nexive-mailings-]YYYYMMDDhhmmss[.json]');
   fs.write(outputFilename, JSON.stringify(shipmentStatuses), 'w');
   this.echo('Results stored in: ' + outputFilename);
 }
