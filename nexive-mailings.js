@@ -80,9 +80,9 @@ var parseCurrentPage = function() {
       // "../../Images/statoBusta_X.jpg"
       var stateMapping = {
         '1': 'state_1', // Recapitata Nexive
-        '2': 'state_2', // Postalizzata PT
-        '3': 'state_3', // In lavorazione
-        '4': 'state_4', // Rese
+        '2': 'state_4', // Postalizzata PT
+        '3': 'state_2', // In lavorazione
+        '4': 'state_3', // Rese
         '5': 'state_5', // NoCert
         '6': 'state_6', // In giacenza
         '7': 'state_7' // Nexive International
