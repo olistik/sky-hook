@@ -158,7 +158,7 @@ var performSearchAndAdvance = function() {
 casper.then(performSearchAndAdvance.bind(casper));
 
 var dumpResultsToFile = function() {
-  var outputFilename = moment().format('[nexive-mailings-]YYYYMMDDhhmmss[.json]');
+  var outputFilename = moment().format('[nexive-mailings-]YYYYMMDDHHmmss[.json]');
   fs.write(outputFilename, JSON.stringify(shipmentStatuses), 'w');
   this.echo('Results stored in: ' + outputFilename);
 }
