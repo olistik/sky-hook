@@ -74,7 +74,11 @@ var parseCurrentPage = function() {
       }
 
       // barcode: 0, // BarCode
-      data.barcode = $(element).children().eq(0).children().html();
+      var barcodeContainer = $(element).children().eq(0).children();
+      data.barcode = barcodeContainer.html();
+      if (barcodeContainer.is('a')) {
+        data.barcodeLink = barcodeContainer.attr('href');
+      }
 
       // state: 8, // Stato
       // "../../Images/statoBusta_X.jpg"
@@ -113,9 +117,62 @@ var advanceToNextPage = function() {
   );
 }
 
+var monthNumberFromCode = function(monthCode) {
+  var mapping = {
+    'GEN': '01',
+    'FEB': '02',
+    'MAR': '03',
+    'APR': '04',
+    'MAG': '05',
+    'GIU': '06',
+    'LUG': '07',
+    'AGO': '08',
+    'SET': '09',
+    'OTT': '10',
+    'NOV': '11',
+    'DIC': '12'
+  };
+  return mapping[monthCode] || 'XX';
+}
+
+var parseBarcodeLinks = function(shipmentStatusIndex) {
+  if (shipmentStatusIndex >= shipmentStatuses.length) {
+    return;
+  }
+  var link = shipmentStatuses[shipmentStatusIndex].barcodeLink;
+  if (link) {
+    this.thenOpen(link, function() {
+      this.echo('Opening link for barcode: ' + shipmentStatuses[shipmentStatusIndex].barcode);
+      this.waitForSelector('.statoOn', function() {
+        var psState = this.fetchText('.statoOn');
+        shipmentStatuses[shipmentStatusIndex].ptState = psState;
+        if (psState.match(/consegnato/)) {
+          shipmentStatuses[shipmentStatusIndex].state = 'state_1'; // delivered 
+        } else if (psState.match(/lavorazione/)) {
+          shipmentStatuses[shipmentStatusIndex].state = 'state_3'; // processing
+        }
+        var date = psState.match(/([0-9]+)-([A-Z]{3})-([0-9]{4})/);
+        if (date) {
+          var day = date[1];
+          var month = monthNumberFromCode(date[2]);
+          var year = date[3];
+          shipmentStatuses[shipmentStatusIndex].lastUpdatedAt = '' + day + '/' + month + '/' + year + ' 0.00.00';
+        }
+        parseBarcodeLinks.bind(this)(shipmentStatusIndex + 1);
+      });
+    });
+  } else {
+    this.then(function() {
+      parseBarcodeLinks.bind(this)(shipmentStatusIndex + 1);
+    });
+  }
+}
+
 var parseCurrentPageAndAdvanceUnlessLastPage = function() {
   parseCurrentPage.bind(this)();
-  if (!isLastPage.bind(this)()) {
+  if (isLastPage.bind(this)()) {
+    parseBarcodeLinks.bind(this)(0);
+  } else {
     advanceToNextPage.bind(this)();
   }
 }
