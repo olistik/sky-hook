@@ -184,7 +184,6 @@ var inlineFetchOfPageShipmentStatuses = function() {
       units: 11, // Colli
       estimatedDeliveryDate: 12, // Data Prevista Consegna
       fileId: 13, // Id File
-      createdAt: 14, // Data Creazione
       customerReference: 15, // Rif. Cliente
       priceFacility: 16 // Centro di Costo
     };
@@ -195,6 +194,8 @@ var inlineFetchOfPageShipmentStatuses = function() {
         data[key] = '';
       }
     }
+
+    data.createdAt = '';
 
     // size: 10, // Taglia
     data.size = $(element).children().eq(10).children('span').html();
