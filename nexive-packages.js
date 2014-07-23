@@ -49,40 +49,7 @@ var debug = function(data) {
 var pageShipmentStatuses = [];
 var pageShipmentStatusIndex = 0;
 var nextCallback = function() {};
-var nextDetailInfoCallback = function() {};
 var pageDetailInfoIndex = 1;
-
-var fetchCreatedAtFromDetailInfo = function() {
-  var createdAt = this.evaluate(function() {
-    var rows = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_ElencoMovimenti_DXMainTable .dxgvDataRow');
-    var row = rows.filter(function(index, row) {
-      var status = $(row).find('.dxgv').eq(2).html().trim();
-      return status == 'In Lavorazione - Presa in Carico';
-    });
-    if (row.length == 1) {
-      return row.find('.dxgv').eq(0).html().trim();
-    } else {
-      return null;
-    }
-  });
-  if (createdAt == '') {
-    return null;
-  } else {
-    return createdAt;
-  }
-};
-
-var pageDetailHasNextPage = function() {
-  return this.evaluate(function() {
-    return $('#iDettaglio').contents().find('.dxWeb_pNext').length > 0;
-  });
-};
-
-var clickDetailInfoNextButton = function() {
-  this.evaluate(function() {
-    $('#iDettaglio').contents().find('.dxWeb_pNext').click();
-  });
-};
 
 var hasLoadedPageDetailPage = function() {
   return this.evaluate(function(pageDetailInfoIndex) {
@@ -94,32 +61,11 @@ var handleTimeout = function() {
   this.echo('Timed out.');
 };
 
-var fetchCreatedAtInfoAndAdvance = function() {
-  var createdAt = fetchCreatedAtFromDetailInfo.bind(this)();
-  if (createdAt) {
-    pageShipmentStatuses[pageShipmentStatusIndex].createdAt = createdAt;
-    nextDetailInfoCallback();
-  } else if (pageDetailHasNextPage.bind(this)()) {
-    ++pageDetailInfoIndex;
-    clickDetailInfoNextButton.bind(this)();
-    this.waitFor(
-      hasLoadedPageDetailPage.bind(this),
-      fetchCreatedAtInfoAndAdvance.bind(this),
-      handleTimeout.bind(this),
-      10000
-    );
-  } else {
-    nextDetailInfoCallback();
-  }
-};
-
 var fetchDetailInfo = function() {
   var detailsData = this.evaluate(function() {
     var address = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').html().trim();
     var cap = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestCap').html().trim();
-    var createdAt = '';
     var data = {
-      createdAt: createdAt,
       address: address,
       cap: cap
     };
@@ -129,19 +75,10 @@ var fetchDetailInfo = function() {
   pageShipmentStatuses[pageShipmentStatusIndex].address = detailsData.address;
   pageShipmentStatuses[pageShipmentStatusIndex].cap = detailsData.cap;
 
-  if (detailsData.createdAt != '') {
-    pageShipmentStatuses[pageShipmentStatusIndex].createdAt = detailsData.createdAt;
-  }
-
   delete pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
 
-  nextDetailInfoCallback = function() {
-    ++pageShipmentStatusIndex;
-    fetchDetailInfoAndAdvanceUnlessLastRow.bind(this)();
-  }.bind(this);
-
-  pageDetailInfoIndex = 1;
-  fetchCreatedAtInfoAndAdvance.bind(this)();
+  ++pageShipmentStatusIndex;
+  fetchDetailInfoAndAdvanceUnlessLastRow.bind(this)();
 }
 
 var hasLoadedDetailIFrame = function() {
@@ -184,6 +121,7 @@ var inlineFetchOfPageShipmentStatuses = function() {
       units: 11, // Colli
       estimatedDeliveryDate: 12, // Data Prevista Consegna
       fileId: 13, // Id File
+      createdAt: 14, // Data Creazione
       customerReference: 15, // Rif. Cliente
       priceFacility: 16 // Centro di Costo
     };
@@ -194,8 +132,6 @@ var inlineFetchOfPageShipmentStatuses = function() {
         data[key] = '';
       }
     }
-
-    data.createdAt = '';
 
     // size: 10, // Taglia
     data.size = $(element).children().eq(10).children('span').html();
