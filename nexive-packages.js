@@ -5,6 +5,7 @@ var fs = require('fs');
 var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
+var enoughPagesCounter = 30;
 
 // Step 1
 var loginStep = function() {
@@ -156,6 +157,10 @@ var isLastPage = function() {
   });
 }
 
+var enoughPages = function() {
+  return fetchCurrentPageIndex.bind(this)() == enoughPagesCounter;
+}
+
 var advanceToNextPage = function() {
   this.evaluate(function() {
     var nextPaginationLink = $('.dxpCurrentPageNumber').nextAll('.dxpPageNumber').eq(0);
@@ -170,7 +175,7 @@ var advanceToNextPage = function() {
 
 var parseCurrentPageAndAdvanceUnlessLastPage = function() {
   nextCallback = function() {
-    if (!isLastPage.bind(this)()) {
+    if (!isLastPage.bind(this)() && !enoughPages.bind(this)()) {
       advanceToNextPage.bind(this)();
     }
   }.bind(this);
