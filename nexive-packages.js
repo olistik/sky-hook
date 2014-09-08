@@ -118,12 +118,12 @@ var inlineFetchOfPageShipmentStatuses = function() {
       state: 7, // Stato
       reason: 8, // Motivo
       cod: 9, // COD
-      units: 11, // Colli
-      estimatedDeliveryDate: 12, // Data Prevista Consegna
-      fileId: 13, // Id File
-      createdAt: 14, // Data Creazione
-      customerReference: 15, // Rif. Cliente
-      priceFacility: 16 // Centro di Costo
+      units: 14, // Colli
+      estimatedDeliveryDate: 15, // Data Prevista Consegna
+      fileId: 16, // Id File
+      createdAt: 17, // Data Creazione
+      customerReference: 18, // Rif. Cliente
+      priceFacility: 19 // Centro di Costo
     };
     var data = {};
     for (var key in indexMapping) {
@@ -134,7 +134,7 @@ var inlineFetchOfPageShipmentStatuses = function() {
     }
 
     // size: 10, // Taglia
-    data.size = $(element).children().eq(10).children('span').html();
+    data.size = $(element).children().eq(13).children('span').html();
 
     data.detailsLinkId = $(element).children().eq(0).find('img').attr('id');
 
