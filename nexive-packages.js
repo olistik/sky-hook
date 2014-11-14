@@ -6,6 +6,7 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var enoughPagesCounter = 5;
+var longTimeout = 10000;
 
 // Step 1
 var loginStep = function() {
@@ -103,7 +104,7 @@ var fetchDetailInfoAndAdvanceUnlessLastRow = function() {
     hasLoadedDetailIFrame.bind(this),
     fetchDetailInfo.bind(this),
     handleTimeout.bind(this),
-    10000
+    longTimeout
   );
 }
 
@@ -169,7 +170,9 @@ var advanceToNextPage = function() {
   ++stepCurrentPageIndex;
   this.waitFor(
     checkCurrentPage.bind(this),
-    parseCurrentPageAndAdvanceUnlessLastPage.bind(this)
+    parseCurrentPageAndAdvanceUnlessLastPage.bind(this),
+    handleTimeout.bind(this),
+    longTimeout
   );
 }
 
@@ -187,12 +190,16 @@ casper.start(startingUrl, loginStep.bind(casper));
 
 casper.waitFor(
   checkAdvancedSearchButton.bind(casper),
-  clickAdvancedSearchButton.bind(casper)
+  clickAdvancedSearchButton.bind(casper),
+  handleTimeout.bind(this),
+  longTimeout
 );
 
 casper.waitFor(
   checkCurrentPage.bind(casper),
-  parseCurrentPageAndAdvanceUnlessLastPage.bind(casper)
+  parseCurrentPageAndAdvanceUnlessLastPage.bind(casper),
+  handleTimeout.bind(this),
+  longTimeout
 );
 
 // debugging only
