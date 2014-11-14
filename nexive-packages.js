@@ -5,7 +5,7 @@ var fs = require('fs');
 var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
-var enoughPagesCounter = 30;
+var enoughPagesCounter = 5;
 
 // Step 1
 var loginStep = function() {
