@@ -6,8 +6,8 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var startingPageIndex = 1;
-var enoughPagesCounter = 9;
-var longTimeout = 30000;
+var enoughPagesCounter = 74; // pages 1-75
+var longTimeout = 600000; // 10 minutes
 
 if (casper.cli.has('startingPageIndex')) {
   startingPageIndex = casper.cli.get('startingPageIndex');
@@ -230,7 +230,7 @@ var printResults = function() {
 }
 
 var dumpResultsToFile = function() {
-  var outputFilename = moment().format('[nexive-packages-]YYYYMMDDHHmmss[.json]');
+  var outputFilename = moment().format('[nexive-packages-]YYYYMMDDHHmmss[' + pageRange + '][.json]');
   fs.write(outputFilename, JSON.stringify(shipmentStatuses), 'w');
   this.echo(pageRange + 'Results stored in: ' + outputFilename);
 }
