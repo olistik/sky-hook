@@ -5,8 +5,21 @@ var fs = require('fs');
 var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
-var enoughPagesCounter = 150;
-var longTimeout = 50000;
+var startingPageIndex = 1;
+var enoughPagesCounter = 9;
+var longTimeout = 30000;
+
+if (casper.cli.has('startingPageIndex')) {
+  startingPageIndex = casper.cli.get('startingPageIndex');
+};
+
+if (casper.cli.has('enoughPagesCounter')) {
+  enoughPagesCounter = casper.cli.get('enoughPagesCounter');
+};
+
+var pageRange = '[P' + startingPageIndex + '-' + (startingPageIndex + enoughPagesCounter) + '] ';
+
+casper.echo(pageRange);
 
 // Step 1
 var loginStep = function() {
@@ -60,7 +73,7 @@ var hasLoadedPageDetailPage = function() {
 };
 
 var handleTimeout = function() {
-  this.echo('Timed out.');
+  this.echo(pageRange + 'Timed out.');
 };
 
 var fetchDetailInfo = function() {
@@ -97,7 +110,7 @@ var fetchDetailInfoAndAdvanceUnlessLastRow = function() {
   }
   var detailsLinkId = pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
 
-  this.echo('Loading detail ' + (pageShipmentStatusIndex + 1) + '/' + pageShipmentStatuses.length);
+  this.echo(pageRange + 'Loading detail ' + (pageShipmentStatusIndex + 1) + '/' + pageShipmentStatuses.length);
   this.click('#' + detailsLinkId);
 
   this.waitFor(
@@ -145,7 +158,7 @@ var inlineFetchOfPageShipmentStatuses = function() {
 };
 
 var parseCurrentPage = function() {
-  this.echo('Current page index: ' + fetchCurrentPageIndex.bind(this)());
+  this.echo(pageRange + 'Current page index: ' + fetchCurrentPageIndex.bind(this)());
   pageShipmentStatuses = this.evaluate(inlineFetchOfPageShipmentStatuses);
 
   pageShipmentStatusIndex = 0;
@@ -159,7 +172,7 @@ var isLastPage = function() {
 }
 
 var enoughPages = function() {
-  return fetchCurrentPageIndex.bind(this)() == enoughPagesCounter;
+  return fetchCurrentPageIndex.bind(this)() == startingPageIndex + enoughPagesCounter;
 }
 
 var advanceToNextPage = function() {
@@ -182,7 +195,13 @@ var parseCurrentPageAndAdvanceUnlessLastPage = function() {
       advanceToNextPage.bind(this)();
     }
   }.bind(this);
-  parseCurrentPage.bind(this)();
+
+  if (fetchCurrentPageIndex.bind(this)() < startingPageIndex) {
+    this.echo(pageRange + 'Skipping page index: ' + fetchCurrentPageIndex.bind(this)());
+    nextCallback();
+  } else {
+    parseCurrentPage.bind(this)();
+  }
 }
 
 // Execution flow
@@ -207,13 +226,13 @@ var printResults = function() {
   var barcodes = shipmentStatuses.map(function(shipmentStatus) {
     return shipmentStatus.barcode;
   }).join(', ');
-  this.echo('Extracted ' + shipmentStatuses.length + ' records: [' + barcodes + ']');
+  this.echo(pageRange + 'Extracted ' + shipmentStatuses.length + ' records: [' + barcodes + ']');
 }
 
 var dumpResultsToFile = function() {
   var outputFilename = moment().format('[nexive-packages-]YYYYMMDDHHmmss[.json]');
   fs.write(outputFilename, JSON.stringify(shipmentStatuses), 'w');
-  this.echo('Results stored in: ' + outputFilename);
+  this.echo(pageRange + 'Results stored in: ' + outputFilename);
 }
 
 // Ending code
