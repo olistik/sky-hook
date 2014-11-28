@@ -6,7 +6,7 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var startingPageIndex = 1;
-var enoughPagesCounter = 74; // pages 1-75
+var enoughPagesCounter = 30; // pages 1-30
 var longTimeout = 600000; // 10 minutes
 
 if (casper.cli.has('startingPageIndex')) {
