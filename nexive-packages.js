@@ -25,6 +25,8 @@ if (casper.cli.has('password')) {
   credentials.password = casper.cli.get('password');
 };
 
+casper.echo('Fetching data for user: ' + credentials.username);
+
 var pageRange = '[P' + startingPageIndex + '-' + (startingPageIndex + enoughPagesCounter) + '] ';
 
 casper.echo(pageRange);
