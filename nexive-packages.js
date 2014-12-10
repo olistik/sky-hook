@@ -6,7 +6,7 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var startingPageIndex = 1;
-var enoughPagesCounter = 30; // pages 1-30
+var enoughPagesCounter = 35; // pages 1-30
 var longTimeout = 600000; // 10 minutes
 
 if (casper.cli.has('startingPageIndex')) {
@@ -15,6 +15,14 @@ if (casper.cli.has('startingPageIndex')) {
 
 if (casper.cli.has('enoughPagesCounter')) {
   enoughPagesCounter = casper.cli.get('enoughPagesCounter');
+};
+
+if (casper.cli.has('username')) {
+  credentials.username = casper.cli.get('username');
+};
+
+if (casper.cli.has('password')) {
+  credentials.password = casper.cli.get('password');
 };
 
 var pageRange = '[P' + startingPageIndex + '-' + (startingPageIndex + enoughPagesCounter) + '] ';
