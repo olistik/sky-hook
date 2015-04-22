@@ -6,8 +6,8 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var startingPageIndex = 1;
-var enoughPagesCounter = 35; // pages 1-30
-var longTimeout = 600000; // 10 minutes
+var enoughPagesCounter = 35; // pages 1-35
+var longTimeout = 60000; // 1 minute
 
 if (casper.cli.has('startingPageIndex')) {
   startingPageIndex = casper.cli.get('startingPageIndex');
@@ -58,7 +58,7 @@ var shipmentStatuses = [];
 
 var fetchCurrentPageIndex = function() {
   return this.evaluate(function() {
-    return parseInt($('.dxpCurrentPageNumber').html().slice(1, -1), 10);
+    return parseInt($('.dxp-num.dxp-current').html(), 10);
   });
 }
 
@@ -78,7 +78,7 @@ var pageDetailInfoIndex = 1;
 
 var hasLoadedPageDetailPage = function() {
   return this.evaluate(function(pageDetailInfoIndex) {
-    return $('#iDettaglio').contents().find('.dxpCurrentPageNumber').html().slice(1, -1) == pageDetailInfoIndex;
+    return $('#mpPopupFrame').contents().find('.dxp-num.dxp-current').html().slice(1, -1) == pageDetailInfoIndex;
   }, pageDetailInfoIndex);
 };
 
@@ -88,8 +88,8 @@ var handleTimeout = function() {
 
 var fetchDetailInfo = function() {
   var detailsData = this.evaluate(function() {
-    var address = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').html().trim();
-    var cap = $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestCap').html().trim();
+    var address = $('#mpPopupFrame').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').html().trim();
+    var cap = $('#mpPopupFrame').contents().find('#ctl00_ContentPlaceHolder1_LblDestCap').html().trim();
     var data = {
       address: address,
       cap: cap
@@ -108,7 +108,7 @@ var fetchDetailInfo = function() {
 
 var hasLoadedDetailIFrame = function() {
   return this.evaluate(function() {
-    return $('#iDettaglio').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').length == 1;
+    return $('#mpPopupFrame').contents().find('#ctl00_ContentPlaceHolder1_LblDestIndirizzo').length == 1;
   });
 };
 
@@ -132,7 +132,7 @@ var fetchDetailInfoAndAdvanceUnlessLastRow = function() {
 }
 
 var inlineFetchOfPageShipmentStatuses = function() {
-  return $('.dxgvTable .dxgvDataRow').map(function(index, element) {
+  return $('.dxgvTable_Nexive .dxgvDataRow_Nexive').map(function(index, element) {
     var indexMapping = {
       barcode: 1, // BarCode
       firstName: 2, // Nome
@@ -177,7 +177,7 @@ var parseCurrentPage = function() {
 
 var isLastPage = function() {
   return this.evaluate(function() {
-    return $('.dxWeb_pNextDisabled').length == 1;
+    return $('.dxWeb_pNextDisabled_Nexive').length == 1;
   });
 }
 
@@ -187,7 +187,7 @@ var enoughPages = function() {
 
 var advanceToNextPage = function() {
   this.evaluate(function() {
-    var nextPaginationLink = $('.dxpCurrentPageNumber').nextAll('.dxpPageNumber').eq(0);
+    var nextPaginationLink = $('.dxp-num.dxp-current').nextAll('.dxp-num').eq(0);
     nextPaginationLink.click();
   });
   ++stepCurrentPageIndex;
