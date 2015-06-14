@@ -6,7 +6,7 @@ var credentials = require('credentials.json');
 
 var startingUrl = 'https://www.sistemacompleto.it/Senders/Ricerche/TrackAndTrace.aspx';
 var startingPageIndex = 1;
-var enoughPagesCounter = 35; // pages 1-35
+var enoughPagesCounter = 150; // pages 1-150
 var longTimeout = 60000; // 1 minute
 
 if (casper.cli.has('startingPageIndex')) {
@@ -142,13 +142,13 @@ var inlineFetchOfPageShipmentStatuses = function() {
       lastUpdatedAt: 6, // Data Ultimo Stato
       state: 7, // Stato
       reason: 8, // Motivo
-      cod: 9, // COD
-      units: 14, // Colli
-      estimatedDeliveryDate: 15, // Data Prevista Consegna
-      fileId: 16, // Id File
-      createdAt: 17, // Data Creazione
-      customerReference: 18, // Rif. Cliente
-      priceFacility: 19 // Centro di Costo
+      cod: 10, // COD
+      units: 15, // Colli
+      estimatedDeliveryDate: 16, // Data Prevista Consegna
+      fileId: 17, // Id File
+      createdAt: 18, // Data Creazione
+      customerReference: 19, // Rif. Cliente
+      priceFacility: 20 // Centro di Costo
     };
     var data = {};
     for (var key in indexMapping) {
