@@ -100,7 +100,7 @@ var fetchDetailInfo = function() {
   pageShipmentStatuses[pageShipmentStatusIndex].address = detailsData.address;
   pageShipmentStatuses[pageShipmentStatusIndex].cap = detailsData.cap;
 
-  delete pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
+  delete pageShipmentStatuses[pageShipmentStatusIndex].detailsJavascript;
 
   ++pageShipmentStatusIndex;
   fetchDetailInfoAndAdvanceUnlessLastRow.bind(this)();
@@ -118,10 +118,12 @@ var fetchDetailInfoAndAdvanceUnlessLastRow = function() {
     nextCallback();
     return;
   }
-  var detailsLinkId = pageShipmentStatuses[pageShipmentStatusIndex].detailsLinkId;
+  var detailsJavascript = pageShipmentStatuses[pageShipmentStatusIndex].detailsJavascript;
 
   this.echo(pageRange + 'Loading detail ' + (pageShipmentStatusIndex + 1) + '/' + pageShipmentStatuses.length);
-  this.click('#' + detailsLinkId);
+  this.evaluate(function(detailsJavascript) {
+    eval(detailsJavascript);
+  }, detailsJavascript);
 
   this.waitFor(
     hasLoadedDetailIFrame.bind(this),
@@ -135,20 +137,20 @@ var inlineFetchOfPageShipmentStatuses = function() {
   return $('.dxgvTable_Nexive .dxgvDataRow_Nexive').map(function(index, element) {
     var indexMapping = {
       barcode: 1, // BarCode
-      firstName: 2, // Nome
-      lastName: 3, // Cognome
-      city: 4, // Comune
-      province: 5, // Prov
-      lastUpdatedAt: 6, // Data Ultimo Stato
-      state: 7, // Stato
-      reason: 8, // Motivo
+      firstName: 3, // Nome
+      lastName: 4, // Cognome
+      city: 5, // Comune
+      province: 6, // Prov
+      lastUpdatedAt: 7, // Data Ultimo Stato
+      state: 8, // Stato
+      reason: 9, // Motivo
       cod: 10, // COD
       units: 15, // Colli
       estimatedDeliveryDate: 16, // Data Prevista Consegna
-      fileId: 17, // Id File
-      createdAt: 18, // Data Creazione
-      customerReference: 19, // Rif. Cliente
-      priceFacility: 20 // Centro di Costo
+      fileId: 2, // Id File
+      createdAt: 17, // Data Creazione
+      customerReference: 18, // Rif. Cliente
+      priceFacility: 19 // Centro di Costo
     };
     var data = {};
     for (var key in indexMapping) {
@@ -161,7 +163,7 @@ var inlineFetchOfPageShipmentStatuses = function() {
     // size: 10, // Taglia
     data.size = $(element).children().eq(13).children('span').html();
 
-    data.detailsLinkId = $(element).children().eq(0).find('img').attr('id');
+    data.detailsJavascript = $(element).children().eq(0).find('.InfoIcon').attr('onclick');
 
     return data;
   }).get();
