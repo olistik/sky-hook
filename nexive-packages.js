@@ -31,7 +31,7 @@ var pageRange = '[P' + startingPageIndex + '-' + (startingPageIndex + enoughPage
 
 casper.echo(pageRange);
 
-// Step 1
+// <step: 0>
 var loginStep = function() {
   this.fillSelectors('form[name="aspnetForm"]', {
     'input[name="ctl00$contentPlaceHolder$usernameIn"]': credentials.username,
@@ -40,8 +40,9 @@ var loginStep = function() {
 
   this.click('#ctl00_contentPlaceHolder_label_btnAccedi');
 };
+// </step: 0>
 
-// Step 2
+// <step: 1>
 var checkAdvancedSearchButton = function() {
   return this.evaluate(function() {
     return $('#ctl00_cphMainContext_hlkTrackAndTrace').length == 1;
@@ -51,6 +52,20 @@ var checkAdvancedSearchButton = function() {
 var clickAdvancedSearchButton = function() {
   this.click('#ctl00_cphMainContext_hlkTrackAndTrace');
 }
+// </step: 1>
+
+// <step: 2>
+var checkSearchPageOptions = function() {
+  return this.evaluate(function() {
+    return $('#ctl00_cphMainContext_rblPeriodi_2').length == 1;
+  });
+};
+
+var fillSearchPageOptionsAndSubmit = function() {
+  this.click('#ctl00_cphMainContext_rblPeriodi_2');
+  this.click('#ctl00_cphMainContext_btnFiltra_CD');
+};
+// </step: 2>
 
 // global vars
 var stepCurrentPageIndex = 1;
@@ -63,6 +78,12 @@ var fetchCurrentPageIndex = function() {
 }
 
 // Step 3 (recursive)
+var checkDataLoaded = function() {
+  return this.evaluate(function() {
+    return $('#ctl00_cphMainContext_grvElencoLdv_DXMainTable .dxgvDataRow_Nexive').length > 0;
+  });
+};
+
 var checkCurrentPage = function() {
   return fetchCurrentPageIndex.bind(this)() == stepCurrentPageIndex;
 }
@@ -216,9 +237,11 @@ var parseCurrentPageAndAdvanceUnlessLastPage = function() {
   }
 }
 
-// Execution flow
+// <execution flow>
+// <step: 0>
 casper.start(startingUrl, loginStep.bind(casper));
 
+// <step: 1>
 casper.waitFor(
   checkAdvancedSearchButton.bind(casper),
   clickAdvancedSearchButton.bind(casper),
@@ -226,12 +249,22 @@ casper.waitFor(
   longTimeout
 );
 
+// <step: 2>
 casper.waitFor(
-  checkCurrentPage.bind(casper),
+  checkSearchPageOptions.bind(casper),
+  fillSearchPageOptionsAndSubmit.bind(casper),
+  handleTimeout.bind(this),
+  longTimeout
+);
+
+// <step: 3>
+casper.waitFor(
+  checkDataLoaded.bind(casper),
   parseCurrentPageAndAdvanceUnlessLastPage.bind(casper),
   handleTimeout.bind(this),
   longTimeout
 );
+// </execution flow>
 
 // debugging only
 var printResults = function() {
@@ -246,6 +279,11 @@ var dumpResultsToFile = function() {
   fs.write(outputFilename, JSON.stringify(shipmentStatuses), 'w');
   this.echo(pageRange + 'Results stored in: ' + outputFilename);
 }
+
+var captureScreen = function() {
+  var outputFilename = moment().format('[screenshot]YYYYMMDDHHmmss[' + pageRange + '][.png]');
+  casper.capture(outputFilename);
+};
 
 // Ending code
 casper.run(function() {
